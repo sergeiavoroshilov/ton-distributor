@@ -1,0 +1,15 @@
+;; operations (constant values taken from crc32 on op message in the companion .tlb files and appear during build)
+const op::withdraw = 1;
+const op::add_rule = 2;
+const op::remove_rule = 3;
+const op::transfer_ownership = 4;
+
+;; errors
+const error::unknown_op = 101;
+const error::access_denied = 102;
+const error::insufficient_balance = 103;
+const error::too_many_rules = 104;
+
+;; other
+const const::min_tons_for_storage = 10000000; ;; 0.01 TON
+const const::max_rules_count = 10;

@@ -1,0 +1,73 @@
+#pragma version >=0.2.0;
+
+#include "imports/stdlib.fc";
+#include "imports/constants.fc";
+
+slice parse_sender_address (cell in_msg_full) inline {
+  var cs = in_msg_full.begin_parse();
+  var flags = cs~load_uint(4);
+  slice sender_address = cs~load_msg_addr();
+  return sender_address;
+}
+
+;; =============== storage =============================
+
+(slice, cell) load_data () inline {
+  cell data = get_data();
+  var ds = data.begin_parse();
+  slice owner_address = ds~load_msg_addr();
+  cell rules = ds.slice_bits() == 0 ? new_dict() : data;
+  return (owner_address, rules);
+}
+
+;; =============== messages =============================
+
+() recv_internal(int balance, int msg_value, cell in_msg_full, slice in_msg_body)  {
+  int op = in_msg_body~load_int(32);
+	int query_id = in_msg_body~load_uint(64);
+	var sender_address = parse_sender_address(in_msg_full);
+  
+  var (owner_address, rules) = load_data();
+
+  ;; load rules from C4
+
+  if (op == op::withdraw) {
+    throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
+    return ();
+  }
+
+  if (op == op::add_rule) {
+    throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
+    return ();
+  }
+
+  if (op == op::remove_rule) {
+    throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
+    return ();
+  }
+
+  if (op == op::transfer_ownership) {
+    throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
+    return ();
+  }
+
+  ;; throw(error::unknown_op);
+  ;; send or save coins according to rules
+}
+
+;; =============== getters =============================
+
+slice owner_address() method_id {
+  var (owner_address, _) = load_data();
+  return owner_address;
+}
+
+cell rules() method_id {
+  var (_, rules) = load_data();
+  return rules;
+}
+
+int balance() method_id {
+  var [balance, _] = get_balance();
+  return balance;
+}
