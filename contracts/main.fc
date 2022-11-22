@@ -31,6 +31,11 @@ slice parse_sender_address (cell in_msg_full) inline {
 
   ;; load rules from C4
 
+  if (op == op::income) {
+    ;; send or save coins according to rules
+    return ();
+  }
+
   if (op == op::withdraw) {
     throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
     return ();
@@ -51,8 +56,7 @@ slice parse_sender_address (cell in_msg_full) inline {
     return ();
   }
 
-  ;; throw(error::unknown_op);
-  ;; send or save coins according to rules
+  throw(error::unknown_op);
 }
 
 ;; =============== getters =============================
