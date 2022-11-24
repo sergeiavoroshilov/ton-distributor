@@ -4,7 +4,7 @@ import { Address, Cell, Slice } from 'ton';
 import { SmartContract } from 'ton-contract-executor';
 import { hex } from '../build/main.compiled.json';
 import * as main from '../contracts/main';
-import { internalMessage, randomAddress } from './helpers';
+import { randomAddress } from './helpers';
 import BN from 'bn.js';
 chai.use(chaiBN(BN));
 

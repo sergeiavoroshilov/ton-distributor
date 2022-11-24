@@ -1,0 +1,49 @@
+import chai, { expect } from 'chai';
+import chaiBN from 'chai-bn';
+import { Address, Cell, Slice } from 'ton';
+import { SmartContract } from 'ton-contract-executor';
+import { hex } from '../build/main.compiled.json';
+import * as main from '../contracts/main';
+import { internalMessage, randomAddress } from './helpers';
+import BN from 'bn.js';
+chai.use(chaiBN(BN));
+
+describe('Transfer ownership tests', () => {
+  let contract: SmartContract;
+
+  beforeEach(async () => {
+    contract = await SmartContract.fromCell(
+      Cell.fromBoc(hex)[0], // code cell from build output
+      main.data({ ownerAddress: randomAddress('owner') })
+    );
+  });
+
+  it('should allow the owner to change owners', async () => {
+    const send = await contract.sendInternalMessage(
+      internalMessage({
+        from: randomAddress('owner'),
+        body: main.transferOwnership({ newOwnerAddress: randomAddress('newowner') }),
+      })
+    );
+    expect(send.type).to.equal('success');
+
+    const call = await contract.invokeGetMethod('owner_address', []);
+    const address = (call.result[0] as Slice).readAddress();
+    expect(address?.equals(randomAddress('newowner'))).to.equal(true);
+  });
+
+  it('should prevent others from changing owners', async () => {
+    const send = await contract.sendInternalMessage(
+      internalMessage({
+        from: randomAddress('notowner'),
+        body: main.transferOwnership({ newOwnerAddress: randomAddress('newowner') }),
+      })
+    );
+    expect(send.type).to.equal('failed');
+    expect(send.exit_code).to.equal(102); // access_denied in contracts/imports/constants.fc
+
+    const call = await contract.invokeGetMethod('owner_address', []);
+    const address = (call.result[0] as Slice).readAddress();
+    expect(address?.equals(randomAddress('owner'))).to.equal(true);
+  });
+});

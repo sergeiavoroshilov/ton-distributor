@@ -20,6 +20,15 @@ slice parse_sender_address (cell in_msg_full) inline {
   return (owner_address, rules);
 }
 
+() save_data(slice owner_address, cell rules) impure inline {
+  var dic = rules.dict_empty?() ? begin_cell().end_cell() : rules;
+
+  set_data(begin_cell()
+    .store_slice(owner_address)
+    .store_dict(dic)
+    .end_cell());
+}
+
 ;; =============== messages =============================
 
 () recv_internal(int balance, int msg_value, cell in_msg_full, slice in_msg_body)  {
@@ -53,6 +62,8 @@ slice parse_sender_address (cell in_msg_full) inline {
 
   if (op == op::transfer_ownership) {
     throw_unless(error::access_denied, equal_slices(sender_address, owner_address));
+    slice new_owner_address = in_msg_body~load_msg_addr();
+    save_data(new_owner_address, rules);
     return ();
   }
 
